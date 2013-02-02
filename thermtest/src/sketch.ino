@@ -15,5 +15,5 @@ void setup() {
 
 void loop() {
 	Serial.println(Thermister(analogRead(0)));  // display Fahrenheit
-	delay(100);
+	delay(1000);
 }
