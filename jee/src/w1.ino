@@ -17,7 +17,7 @@
 #include <RF12.h>
 #include <Ports.h>
 
-#define DS1820_DEBUG_LOW
+//#define DS1820_DEBUG_LOW
 #define DS1820_DEBUG
 #define ONE_MN_INTERVAL 1000L
 
