@@ -712,7 +712,8 @@ void loop() {
     if (rf12_recvDone()) {
         byte n = rf12_len;
         if (rf12_crc == 0) {
-            Serial.print("OK");
+            Serial.print(millis());
+            Serial.print(" OK");
         } else {
             if (quiet)
                 return;
