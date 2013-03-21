@@ -30,13 +30,12 @@ OneWire  ds(4);
 
 byte HighByte, LowByte, TReading, SignBit, Whole, Fract;
 byte TempRead, CountRemain;
-word Tc_100;
+int stamp;
 char StrBuff[50];
 char TempAsString[10];
 byte TempAsStringLen;
 byte TempBinFormat[15];
 byte addr[8];
-byte count;
 byte *temp;
 
 void setup() {
@@ -114,7 +113,7 @@ void rf12_send(byte header, const void* data, byte length) {
 	if (rf12_canSend()) {
 		rf12_sendStart(header, data, length);
 		rf12_sendWait(2);
-		delay(10);
+		delay(300);
 	}
 #ifdef LED_PIN
 	activityLed(0);
@@ -124,11 +123,13 @@ void rf12_send(byte header, const void* data, byte length) {
 ISR(WDT_vect) { Sleepy::watchdogEvent(); }
 
 void loop() {
+	stamp = (int)millis();
 	checkAllTemps();
 
 	rf12_sendWait(2);
 	rf12_sleep(RF12_SLEEP);
-	Sleepy::loseSomeTime(10000);
+	Sleepy::loseSomeTime(5000 + stamp - (int)millis());
+	delay(5);
 	rf12_sleep(RF12_WAKEUP);
 }
 
@@ -136,24 +137,18 @@ void loop() {
 void checkAllTemps() {
 	// Note that even if you only want to send out packets, you still have to call rf12 recvDone periodically, because
 	// it keeps the RF12 logic going. If you don't, rf12_canSend() will never return true.
-	count = 0;
 	while (Next1820(addr)) {
-		count += 1;
 		temp = Get1820Tmp(addr);
 		LowByte = temp[0];
 		HighByte = temp[1];
 		Whole = (HighByte << 4) | (LowByte >> 4);
 		Fract = ((LowByte & 0b1111) * 10) / 16;
 
-		TempBinFormat[0] = count;
-		memcpy(&TempBinFormat[1], addr, 8); 
+		memcpy(&TempBinFormat[0], addr, 8); 
 
-		TempBinFormat[9] = Whole;
-		TempBinFormat[10] = Fract;
-		rf12_send(0, TempBinFormat, 15);
+		TempBinFormat[8] = Whole;
+		TempBinFormat[9] = Fract;
+		rf12_send(1, TempBinFormat, 15);
 	}
-	TempBinFormat[0] = 0;
-	TempBinFormat[1] = count;
-	rf12_send(0, TempBinFormat, 2);
 }
 
