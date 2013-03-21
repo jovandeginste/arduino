@@ -28,9 +28,8 @@ void loop() {
 	if (rf12_recvDone()) {
 		byte n = rf12_len;
 		if (rf12_crc == 0) {
+			Serial.print("OK ");
 			Serial.print(millis());
-			Serial.print(" OK");
-			Serial.print(' ');
 			Serial.print((int) rf12_hdr);
 			for (byte i = 0; i < n; ++i) {
 				Serial.print(' ');
@@ -40,7 +39,6 @@ void loop() {
 			activityLed(1);
 
 			if (RF12_WANTS_ACK == 0) {
-				Serial.println(" -> ack");
 				rf12_sendStart(RF12_ACK_REPLY, 0, 0);
 			}
 
