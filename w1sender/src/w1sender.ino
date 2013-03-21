@@ -76,7 +76,7 @@ byte *Get1820Tmp(byte *addr) {
 	ds.select(addr);
 	ds.write(0x44,1);         // start conversion, with parasite power on at the end
 
-	deep_sleep(1000);     // maybe 750ms is enough, maybe not
+	delay(1000);     // maybe 750ms is enough, maybe not
 
 	present = ds.reset();
 	ds.select(addr);
@@ -106,14 +106,6 @@ byte *Get1820Tmp(byte *addr) {
 	return OneWData;
 }
 
-void deep_sleep(int milli) {
-	long limit = millis() + milli;
-	while(millis() <= limit) {
-		set_sleep_mode(SLEEP_MODE_IDLE);
-		sleep_mode();
-	}
-}
-
 void rf12_send(byte header, const void* data, byte length) {
 #ifdef LED_PIN
 	activityLed(1);
@@ -122,13 +114,26 @@ void rf12_send(byte header, const void* data, byte length) {
 	if (rf12_canSend()) {
 		rf12_sendStart(header, data, length);
 		rf12_sendWait(2);
-		deep_sleep(10);
+		delay(10);
 	}
 #ifdef LED_PIN
 	activityLed(0);
 #endif
 }
+
+ISR(WDT_vect) { Sleepy::watchdogEvent(); }
+
 void loop() {
+	checkAllTemps();
+
+	rf12_sendWait(2);
+	rf12_sleep(RF12_SLEEP);
+	Sleepy::loseSomeTime(10000);
+	rf12_sleep(RF12_WAKEUP);
+}
+
+
+void checkAllTemps() {
 	// Note that even if you only want to send out packets, you still have to call rf12 recvDone periodically, because
 	// it keeps the RF12 logic going. If you don't, rf12_canSend() will never return true.
 	count = 0;
@@ -150,6 +155,5 @@ void loop() {
 	TempBinFormat[0] = 0;
 	TempBinFormat[1] = count;
 	rf12_send(0, TempBinFormat, 2);
-	deep_sleep(3000);
 }
 
