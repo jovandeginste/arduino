@@ -7,8 +7,7 @@ do
 	header=$(echo $data | cut -f 3-10 -d " ")
 	data=$(echo $data | cut -f 11- -d " ")
 	[[ -z "$data" ]] && continue
-	echo "Header: <$header>"
-	echo "Data: <$data>"
+	echo -n "[$(date +"%s")] <$header> <$data> "
 	low=$(echo $data | cut -f 1 -d " ")
 	high=$(echo $data | cut -f 2 -d " ")
 	high_shift=$((high << 8))
@@ -21,6 +20,6 @@ do
 		t=$((t + 1))
 		s="-"
 	fi
-	t=$(echo "$t / 16" | bc -l | sed 's/\(\.[0-9]\).*/\1/')
+	t=$(echo $t | awk '{print int($1 / 16 * 10) / 10}')
 	echo "Temp: $s$t"
 done
