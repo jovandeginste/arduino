@@ -89,18 +89,10 @@ byte *Get1820Tmp(byte *addr) {
 	// 18B20 default to 12 bits resolution at power up
 	LowByte = OneWData[0];
 	HighByte = OneWData[1];
-	Whole = (HighByte << 4) | (LowByte >> 4);
-	Fract = ((LowByte & 0b1111) * 10) / 16;
-
-	// A little bit to heavy to go through a bollean for sign in that case...
-	// but keeped as is for compatibility with 18S20 code.
-	SignBit = (Whole & 0b10000000) != 0;
-	Whole &= 0b01111111;
-	sprintf(StrBuff, "1Wire: %c%d.%d",SignBit != 0 ? '-' : '+', Whole, Fract);
+	sprintf(StrBuff, "1Wire: %d %d", LowByte, HighByte);
 	Serial.println(StrBuff);
 
 	if (ds.crc8(OneWData, 8) != OneWData[8]) Serial.println("BAD CRC !");
-	TempAsStringLen = sprintf(TempAsString, "%c%d.%d",SignBit != 0 ? '-' : '+', Whole, Fract);
 #endif
 	return OneWData;
 }
@@ -125,13 +117,13 @@ ISR(WDT_vect) { Sleepy::watchdogEvent(); }
 
 void loop() {
 	stamp = (int)millis();
+	rf12_sleep(RF12_WAKEUP);
 	checkAllTemps();
 
 	rf12_sendWait(2);
 	rf12_sleep(RF12_SLEEP);
 	Sleepy::loseSomeTime(5000 + stamp - (int)millis());
 	delay(5);
-	rf12_sleep(RF12_WAKEUP);
 }
 
 
@@ -140,15 +132,10 @@ void checkAllTemps() {
 	// it keeps the RF12 logic going. If you don't, rf12_canSend() will never return true.
 	while (Next1820(addr)) {
 		temp = Get1820Tmp(addr);
-		LowByte = temp[0];
-		HighByte = temp[1];
-		Whole = (HighByte << 4) | (LowByte >> 4);
-		Fract = ((LowByte & 0b1111) * 10) / 16;
 
 		memcpy(&TempBinFormat[0], addr, 8); 
+		memcpy(&TempBinFormat[8], temp, 2); 
 
-		TempBinFormat[8] = Whole;
-		TempBinFormat[9] = Fract;
 		rf12_send(1, TempBinFormat, 15);
 	}
 }
