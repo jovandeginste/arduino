@@ -1,4 +1,26 @@
 #!/bin/bash
 
-stty -F /dev/ttyUSB0 57600 cs8 -cstopb -parenb
-cat /dev/ttyUSB0
+stty -F /dev/ttyUSB0 57600 -hup raw -echo
+cat /dev/ttyUSB0 | while read data
+do
+	data=$(echo $data | sed 's/[^[:alnum:]\ ]//g')
+	header=$(echo $data | cut -f 3-10 -d " ")
+	data=$(echo $data | cut -f 11- -d " ")
+	[[ -z "$data" ]] && continue
+	echo "Header: <$header>"
+	echo "Data: <$data>"
+	low=$(echo $data | cut -f 1 -d " ")
+	high=$(echo $data | cut -f 2 -d " ")
+	high_shift=$((high << 8))
+	t=$(($high_shift + $low))
+	sign=$((t & 32768))
+	s="+"
+	if [[ "$sign" == "1" ]]
+	then
+		t=$((t ^ 65535))
+		t=$((t + 1))
+		s="-"
+	fi
+	t=$(echo "$t / 16" | bc -l | sed 's/\(\.[0-9]\).*/\1/')
+	echo "Temp: $s$t"
+done

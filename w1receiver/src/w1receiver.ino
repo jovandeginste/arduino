@@ -37,10 +37,6 @@ void loop() {
 			}
 			Serial.println();
 
-			// if (RF12_WANTS_ACK == 0) {
-			// rf12_sendStart(RF12_ACK_REPLY, 0, 0);
-			// }
-
 			activityLed(0);
 		}
 	}
