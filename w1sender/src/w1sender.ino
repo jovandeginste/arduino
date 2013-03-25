@@ -39,7 +39,7 @@ byte addr[8];
 byte *temp;
 
 void setup() {
-	Serial.begin(9600);
+	Serial.begin(57600);
 
 	rf12_initialize(7, RF12_868MHZ, 33);
 	Serial.println("Temp transmiter startup");
@@ -106,18 +106,19 @@ byte *Get1820Tmp(byte *addr) {
 }
 
 void rf12_send(byte header, const void* data, byte length) {
-#ifdef LED_PIN
-	activityLed(1);
-#endif
 	rf12_recvDone();
 	if (rf12_canSend()) {
-		rf12_sendStart(header, data, length);
-		rf12_sendWait(2);
-		delay(300);
-	}
 #ifdef LED_PIN
-	activityLed(0);
+		activityLed(1);
 #endif
+		rf12_sendStart(header, data, length);
+		rf12_sendWait(1);
+		delay(50);
+#ifdef LED_PIN
+		activityLed(0);
+#endif
+		delay(50);
+	}
 }
 
 ISR(WDT_vect) { Sleepy::watchdogEvent(); }

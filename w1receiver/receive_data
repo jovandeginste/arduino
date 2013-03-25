@@ -1,0 +1,4 @@
+#!/bin/bash
+
+stty -F /dev/ttyUSB0 57600 cs8 -cstopb -parenb
+cat /dev/ttyUSB0

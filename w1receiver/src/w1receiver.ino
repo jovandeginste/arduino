@@ -17,10 +17,9 @@ static void activityLed (byte on) {
 }
 
 void setup() {
-	Serial.begin(9600);
+	Serial.begin(57600);
 
 	rf12_initialize(1, RF12_868MHZ, 33);
-	Serial.println("Temp receiver startup");
 	activityLed(0);
 }
 
