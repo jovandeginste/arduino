@@ -14,7 +14,7 @@ do
 	t=$(($high_shift + $low))
 	sign=$((t & 32768))
 	s="+"
-	if [[ "$sign" == "1" ]]
+	if [[ "$sign" != "0" ]]
 	then
 		t=$((t ^ 65535))
 		t=$((t + 1))

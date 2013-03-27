@@ -39,7 +39,7 @@ byte addr[8];
 byte *temp;
 
 void setup() {
-	Serial.begin(57600);
+	Serial.begin(9600);
 
 	rf12_initialize(7, RF12_868MHZ, 33);
 	Serial.println("Temp transmiter startup");
