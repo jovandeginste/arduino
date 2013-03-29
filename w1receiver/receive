@@ -1,0 +1,16 @@
+#!/usr/bin/ruby
+
+low = ARGV[0].to_i
+high = ARGV[1].to_i
+
+
+t = (high << 8) + low
+sign = t & 0x8000
+if sign == 1
+	t = (t ^ 0xffff) + 1
+	s = "-"
+else
+	s = "+"
+end
+t = t.to_f / 16
+puts "Temp: #{'%.2f' % t}"
