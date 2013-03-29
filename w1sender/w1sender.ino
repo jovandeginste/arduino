@@ -1,4 +1,6 @@
 /*
+   Loosely based on work from Gérard Chevalier, Jan 2011
+
    Description
    This code runs on both JeeNodes and JeeNode Micros. Connect one
    or multiple DS18B20 sensors (or any other 1-Wire sensor) to it,
@@ -10,29 +12,22 @@
 References:
 Arduino IDE libs:
  * http://www.pjrc.com/teensy/arduino_libraries/OneWire.zip
- * http://download.milesburton.com/Arduino/MaximTemperature/DallasTemperature_LATEST.zip
  * https://github.com/jcw/jeelib
 
- Arduino als ISP:
- * http://jeelabs.org/2010/07/02/fixing-a-faulty-atmega-arduino/
- ISP pins:
- * http://jeelabs.net/projects/hardware/wiki/Flash_Board
+ Arduino als ISP (for JNµ):
+Connect the wires as such:
+   Arduino	JNµ
+ * A0	->	SCK
+ * A3	->	MOSI
+ * D4	->	MISO
+ * D7	->	RST
+ * 3.3v	->	3.3v
+ * GND	->	G
 
- Programming jnµ:
- * http://jeelabs.org/2013/03/21/programming-the-jn%C2%B5-at-last/
-
- Tiny ino DS18B20:
- * https://github.com/nathanchantrell/TinyTX/blob/master/TinyTX_DS18B20/TinyTX_DS18B20.ino
- Tiny pins:
- * http://forum.jeelabs.net/node/697.html
-
- Loosely based on work from Gérard Chevalier, Jan 2011
  */
 
 #include <OneWire.h>
-#include <RF12.h>
 #include <JeeLib.h>
-#include <avr/sleep.h>
 
 #define LED_PIN     9   // activity LED, comment out to disable
 
@@ -50,9 +45,10 @@ static void activityLed (byte on) {
 
    Connect the sensor to the JNµ as follows:
 
- * DS18B20 gnd	->	JNµ gnd
- * DS18B20 DQ	->	JNµ DIO/PA0 (ATtiny pin 13)
- * DS18B20 Vdd	->	JNµ AIO/PA1 (ATtiny pin 12)
+   DS18B20	JNµ
+ * GND	->	GND
+ * DQ	->	DIO/PA0 (ATtiny pin 13)
+ * Vdd	->	AIO/PA1 (ATtiny pin 12)
 
  */
 #define ONE_WIRE_BUS 10
@@ -64,9 +60,10 @@ static void activityLed (byte on) {
 
    Connect the sensor to the JN as follows:
 
- * DS18B20 gnd	->	JN Port 1 G
- * DS18B20 DQ	->	JN Port 1 D (ATmega pin 4)
- * DS18B20 Vdd	->	JN Port 1 +
+   DS18B20	JN Port 1
+ * GND	->	G
+ * DQ	->	D (ATmega pin 4)
+ * Vdd	->	+
 
  */
 #define ONE_WIRE_BUS 4
