@@ -1,19 +1,37 @@
 /*
- * Jeenode remote Temperature sensor for Temperature Data Logger.
- * Remote sensors use dallas DS18B20 or DS18S20.
- *
- * Each Jeenode senoneWire data over RF12 to central datalogger module.
- * See code & comment of Temperature Data Logger project.
- *
- * Gérard Chevalier, Jan 2011
+   Description
+   This code runs on both JeeNodes and JeeNode Micros. Connect one
+   or multiple DS18B20 sensors (or any other 1-Wire sensor) to it,
+   and it should send it's data over RF to a listening device (eg.
+   a JeeLink running the w1receiver)
+
+   JeeNodes can be programmed over USB, JeeNode micro's over ISP.
+
+References:
+Arduino IDE libs:
+ * http://www.pjrc.com/teensy/arduino_libraries/OneWire.zip
+ * http://download.milesburton.com/Arduino/MaximTemperature/DallasTemperature_LATEST.zip
+ * https://github.com/jcw/jeelib
+
+ Arduino als ISP:
+ * http://jeelabs.org/2010/07/02/fixing-a-faulty-atmega-arduino/
+ ISP pins:
+ * http://jeelabs.net/projects/hardware/wiki/Flash_Board
+
+ Programming jnµ:
+ * http://jeelabs.org/2013/03/21/programming-the-jn%C2%B5-at-last/
+
+ Tiny ino DS18B20:
+ * https://github.com/nathanchantrell/TinyTX/blob/master/TinyTX_DS18B20/TinyTX_DS18B20.ino
+ Tiny pins:
+ * http://forum.jeelabs.net/node/697.html
+
+ Loosely based on work from Gérard Chevalier, Jan 2011
  */
 
-// RF12 frame format: Byte 0 = channel, Byte 1 = temp (bit 7 == sign), Byte 2 = decitemp
-
-// Channel number. In a next release, should be read from config jumpers.
 #include <OneWire.h>
 #include <RF12.h>
-#include <Ports.h>
+#include <JeeLib.h>
 #include <avr/sleep.h>
 
 #define LED_PIN     9   // activity LED, comment out to disable
