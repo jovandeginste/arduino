@@ -2,7 +2,7 @@
  * Jeenode remote Temperature sensor for Temperature Data Logger.
  * Remote sensors use dallas DS18B20 or DS18S20.
  *
- * Each Jeenode sends data over RF12 to central datalogger module.
+ * Each Jeenode senoneWire data over RF12 to central datalogger module.
  * See code & comment of Temperature Data Logger project.
  *
  * Gérard Chevalier, Jan 2011
@@ -26,21 +26,21 @@ static void activityLed (byte on) {
 }
 
 #if defined(__AVR_ATtiny84__)
+
+// JeeNode micro and other ATtiny's
 #define ONE_WIRE_BUS 10   // DS18B20 Temperature sensor is connected on D10/ATtiny pin 13
+#define ONE_WIRE_POWER 9  // DS18B20 Power pin is connected on D9/ATtiny pin 12
 #else
+
+// JeeNode and other ATmega's:
 #define ONE_WIRE_BUS 4   // DS18B20 Temperature sensor is connected on ATmega pin 4
 #endif
 
-#define ONE_WIRE_POWER 9  // DS18B20 Power pin is connected on D9/ATtiny pin 12
 
-OneWire ds(ONE_WIRE_BUS); // Setup a oneWire instance
+OneWire oneWire(ONE_WIRE_BUS); // Setup a oneWire instance
 
-byte HighByte, LowByte, TReading, SignBit, Whole, Fract;
 byte TempRead, CountRemain;
 int stamp;
-char StrBuff[50];
-char TempAsString[10];
-byte TempAsStringLen;
 byte TempBinFormat[15];
 byte addr[8];
 byte *temp;
@@ -67,13 +67,15 @@ void setup() {
 	rf12_control(0xC040); // set low-battery level to 2.2V i.s.o. 3.1V
 	rf12_sleep(0);                          // Put the RFM12 to sleep
 
+#ifdef ONE_WIRE_POWER
 	pinMode(ONE_WIRE_POWER, OUTPUT); // set power pin for DS18B20 to output
+#endif
 }
 
 bool Next1820(byte *addr) {
 	byte i;
-	if ( !ds.search(addr)) {
-		ds.reset_search();
+	if ( !oneWire.search(addr)) {
+		oneWire.reset_search();
 		return false;
 	}
 
@@ -88,18 +90,18 @@ byte *Get1820Tmp(byte *addr) {
 	byte present = 0;
 	byte OneWData[12];
 
-	ds.reset();
-	ds.select(addr);
-	ds.write(0x44,1);         // start conversion, with parasite power on at the end
+	oneWire.reset();
+	oneWire.select(addr);
+	oneWire.write(0x44,1);         // start conversion, with parasite power on at the end
 
 	delay(1000);     // maybe 750ms is enough, maybe not
 
-	present = ds.reset();
-	ds.select(addr);
-	ds.write(0xBE);         // Read Scratchpad
+	present = oneWire.reset();
+	oneWire.select(addr);
+	oneWire.write(0xBE);         // Read Scratchpad
 
 	for ( i = 0; i < 9; i++) {           // we need 9 bytes
-		OneWData[i] = ds.read();
+		OneWData[i] = oneWire.read();
 	}
 
 	return OneWData;
@@ -108,15 +110,11 @@ byte *Get1820Tmp(byte *addr) {
 void rf12_send(byte header, const void* data, byte length) {
 	rf12_recvDone();
 	if (rf12_canSend()) {
-#ifdef LED_PIN
 		activityLed(1);
-#endif
 		rf12_sendStart(header, data, length);
 		rf12_sendWait(1);
 		delay(50);
-#ifdef LED_PIN
 		activityLed(0);
-#endif
 		delay(50);
 	}
 }
