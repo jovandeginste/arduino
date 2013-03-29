@@ -27,13 +27,31 @@ static void activityLed (byte on) {
 
 #if defined(__AVR_ATtiny84__)
 
-// JeeNode micro and other ATtiny's
-#define ONE_WIRE_BUS 10   // DS18B20 Temperature sensor is connected on D10/ATtiny pin 13
-#define ONE_WIRE_POWER 9  // DS18B20 Power pin is connected on D9/ATtiny pin 12
+/*
+   JeeNode micro and other ATtiny's
+
+   Connect the sensor to the JNµ as follows:
+
+ * DS18B20 gnd	->	JNµ gnd
+ * DS18B20 DQ	->	JNµ DIO/PA0 (ATtiny pin 13)
+ * DS18B20 Vdd	->	JNµ AIO/PA1 (ATtiny pin 12)
+
+ */
+#define ONE_WIRE_BUS 10
+#define ONE_WIRE_POWER 9
 #else
 
-// JeeNode and other ATmega's:
-#define ONE_WIRE_BUS 4   // DS18B20 Temperature sensor is connected on ATmega pin 4
+/*
+   JeeNode and other ATmega's
+
+   Connect the sensor to the JN as follows:
+
+ * DS18B20 gnd	->	JN Port 1 G
+ * DS18B20 DQ	->	JN Port 1 D (ATmega pin 4)
+ * DS18B20 Vdd	->	JN Port 1 +
+
+ */
+#define ONE_WIRE_BUS 4
 #endif
 
 
