@@ -12,11 +12,11 @@
 
 // Channel number. In a next release, should be read from config jumpers.
 #include <OneWire.h>
-#include <JeeLib.h>
+#include <RF12.h>
+#include <Ports.h>
+#include <avr/sleep.h>
 
-static long payload;
-
-//#define LED_PIN     9   // activity LED, comment out to disable
+#define LED_PIN     9   // activity LED, comment out to disable
 //#define DEBUG
 
 static void activityLed (byte on) {
@@ -39,34 +39,28 @@ byte addr[8];
 byte *temp;
 
 void setup() {
-    cli();
-  CLKPR = bit(CLKPCE);
-#if defined(__AVR_ATtiny84__)
-  CLKPR = 0; // div 1, i.e. speed up to 8 MHz
-#else
-  CLKPR = 1; // div 2, i.e. slow down to 8 MHz
-#endif
-  sei();
+	Serial.begin(9600);
 
-#if defined(__AVR_ATtiny84__)
-    // power up the radio on JMv3
-    bitSet(DDRB, 0);
-    bitClear(PORTB, 0);
-#endif
-	rf12_initialize(8, RF12_868MHZ, 33);
-    rf12_control(0xC040); // set low-battery level to 2.2V i.s.o. 3.1V
-
-  	rf12_sendNow(0, &payload, sizeof payload); payload++;
+	rf12_initialize(7, RF12_868MHZ, 33);
+	Serial.println("Temp transmiter startup");
 	activityLed(0);
 }
 
 bool Next1820(byte *addr) {
+	byte i;
 	if ( !ds.search(addr)) {
+		Serial.println("No more addresses.");
 		ds.reset_search();
 		return false;
 	}
-  
+	Serial.print("R=");
+	for( i = 0; i < 8; i++) {
+		Serial.print(addr[i], HEX);
+		Serial.print(" ");
+	}
+
 	if ( OneWire::crc8( addr, 7) != addr[7]) {
+		Serial.println("CRC is not valid!");
 		return false;
 	}
 	return true;
@@ -90,6 +84,16 @@ byte *Get1820Tmp(byte *addr) {
 	for ( i = 0; i < 9; i++) {           // we need 9 bytes
 		OneWData[i] = ds.read();
 	}
+
+#ifdef DEBUG
+	// 18B20 default to 12 bits resolution at power up
+	LowByte = OneWData[0];
+	HighByte = OneWData[1];
+	sprintf(StrBuff, "1Wire: %d %d", LowByte, HighByte);
+	Serial.println(StrBuff);
+
+	if (ds.crc8(OneWData, 8) != OneWData[8]) Serial.println("BAD CRC !");
+#endif
 	return OneWData;
 }
 
@@ -99,8 +103,8 @@ void rf12_send(byte header, const void* data, byte length) {
 #ifdef LED_PIN
 		activityLed(1);
 #endif
-		rf12_sendNow(header, data, length);
-		rf12_sendWait(2);
+		rf12_sendStart(header, data, length);
+		rf12_sendWait(1);
 		delay(50);
 #ifdef LED_PIN
 		activityLed(0);
@@ -115,8 +119,7 @@ void loop() {
 	stamp = (int)millis();
 	rf12_sleep(RF12_WAKEUP);
 	checkAllTemps();
-  	rf12_sendNow(0, &payload, sizeof payload); payload++;
-  
+
 	rf12_sendWait(2);
 	rf12_sleep(RF12_SLEEP);
 	Sleepy::loseSomeTime(5000 + stamp - (int)millis());
@@ -128,13 +131,12 @@ void checkAllTemps() {
 	// Note that even if you only want to send out packets, you still have to call rf12 recvDone periodically, because
 	// it keeps the RF12 logic going. If you don't, rf12_canSend() will never return true.
 	while (Next1820(addr)) {
-  	rf12_sendNow(0, &payload, sizeof payload); payload++;
-  		temp = Get1820Tmp(addr);
+		temp = Get1820Tmp(addr);
 
 		memcpy(&TempBinFormat[0], addr, 8); 
 		memcpy(&TempBinFormat[8], temp, 2); 
 
-		rf12_send(0, TempBinFormat, 15);
+		rf12_send(1, TempBinFormat, 15);
 	}
 }
 
