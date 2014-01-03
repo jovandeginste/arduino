@@ -31,6 +31,7 @@ Arduino IDE libs:
 
 #include <OneWire.h>
 #include <JeeLib.h>
+#include <EEPROM.h>
 
 #define LED_PIN     9   // activity LED, comment out to disable
 
@@ -78,6 +79,7 @@ int stamp;
 byte TempBinFormat[15];
 byte addr[8];
 byte *temp;
+byte my_id;
 
 void setup() {
 	cli();
@@ -104,6 +106,8 @@ void setup() {
 #ifdef ONE_WIRE_POWER
 	pinMode(ONE_WIRE_POWER, OUTPUT); // set power pin for DS18B20 to output
 #endif
+        EEPROM.write(0, 13);
+        my_id = (byte)EEPROM.read(0);
 }
 
 bool Next1820(byte *addr) {
@@ -160,7 +164,7 @@ ISR(WDT_vect) {
 void loop() {
 	stamp = (int)millis();
 	rf12_sleep(RF12_WAKEUP);
-	rf12_send(1, "000000001234567", 15);
+        sendLocalData();
 	checkAllTemps();
 
 	rf12_sendWait(2);
@@ -169,6 +173,15 @@ void loop() {
 	delay(5);
 }
 
+void sendLocalData() {
+        memcpy(&TempBinFormat[0], "\0\0\0\0\0\0\0\0", 8);
+        memcpy(&TempBinFormat[1], &my_id, 1);
+        
+        // Heartbeat :-)
+        memcpy(&TempBinFormat[7], "\1", 1);
+        memcpy(&TempBinFormat[8], "\0\0\0\0\0\0\0", 7);
+	rf12_send(1, TempBinFormat, 15);
+}
 
 void checkAllTemps() {
 	// Note that even if you only want to send out packets, you still have to call rf12 recvDone periodically, because
@@ -178,6 +191,7 @@ void checkAllTemps() {
 
 		memcpy(&TempBinFormat[0], addr, 8); 
 		memcpy(&TempBinFormat[8], temp, 2); 
+		memcpy(&TempBinFormat[10], "\0\0\0\0\0", 5); 
 
 		rf12_send(1, TempBinFormat, 15);
 	}
